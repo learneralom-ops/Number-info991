@@ -1,126 +1,130 @@
+
 <!DOCTYPE html>
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Daily Earning - Browser Version</title>
+    
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
-   
+
     <script src='//libtl.com/sdk.js' data-zone='8954258' data-sdk='show_8954258'></script>
     <script src="https://ad.gigapub.tech/script?id=3247"></script> 
 
     <style>
-        /* আপনার বিদ্যমান সকল CSS এখানে থাকবে (সংক্ষেপিত) */
+        /* আপনার সব বিদ্যমান স্টাইল এখানে (সংক্ষেপিত) */
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Noto+Sans+Bengali:wght@400;500;700&display=swap');
         :root { --bg-color: #121212; --card-color: #1e1e1e; --text-color: #ffffff; --primary-color: #007bff; --secondary-color: #28a745; --border-color: #333; }
-        body { font-family: 'Roboto', 'Noto Sans Bengali', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 15px; padding-bottom: 90px; }
         
-        /* Auth Section Styling */
-        #auth-container { max-width: 400px; margin: 50px auto; padding: 20px; background: var(--card-color); border-radius: 15px; border: 1px solid var(--primary-color); }
+        body { font-family: 'Roboto', 'Noto Sans Bengali', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 15px; padding-bottom: 90px; }
+        .hidden { display: none !important; }
+
+        /* Auth UI */
+        #auth-container { max-width: 400px; margin: 40px auto; padding: 20px; background: var(--card-color); border-radius: 15px; border: 1px solid var(--primary-color); }
         .auth-tabs { display: flex; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); }
         .auth-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; color: #888; }
         .auth-tab.active { color: var(--primary-color); border-bottom: 2px solid var(--primary-color); font-weight: bold; }
-        .auth-form { display: none; }
-        .auth-form.active { display: block; }
+        
+        .form-control { width: 100%; padding: 12px; background: #000; border: 1px solid var(--border-color); color: white; border-radius: 8px; margin-bottom: 15px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-secondary { background: var(--secondary-color); color: white; }
 
-        /* Existing App Styles */
-        .container { max-width: 600px; margin: 0 auto; display: none; }
-        .page-content { display: none; }
-        .page-content.active { display: block; }
+        /* Main App UI */
+        .container { max-width: 600px; margin: 0 auto; }
         .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .profile-pic { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--primary-color); }
-        .card { background-color: rgba(0, 123, 255, 0.1); border: 1px solid var(--primary-color); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; margin-top: 10px; }
-        .btn-primary { background-color: var(--primary-color); color: white; }
-        .btn-secondary { background-color: var(--secondary-color); color: white; }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--card-color); display: none; justify-content: space-around; padding: 10px 0; border-top: 1px solid var(--border-color); }
-        .nav-item { background: none; border: none; color: #888; display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; }
+        .card { background: rgba(0, 123, 255, 0.1); border: 1px solid var(--primary-color); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        
+        /* Navigation */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card-color); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid var(--border-color); z-index: 1000; }
+        .nav-item { background: none; border: none; color: #888; font-size: 0.8rem; cursor: pointer; }
         .nav-item.active { color: var(--primary-color); }
-        .nav-icon { width: 24px; height: 24px; fill: currentColor; }
-        .form-control { width: 100%; padding: 12px; background: #000; border: 1px solid var(--border-color); color: white; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; }
-        .popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: none; justify-content: center; align-items: center; }
-        .popup-overlay.show { display: flex; }
-        .popup-content { background: var(--card-color); padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; }
+        .page-content { display: none; }
+        .page-content.active { display: block; }
     </style>
 </head>
 <body>
 
-    <div id="auth-container">
-        <h2 style="text-align: center; color: var(--primary-color);">Daily Earning</h2>
-        <div class="auth-tabs">
-            <div class="auth-tab active" onclick="switchAuth('login')">Login</div>
-            <div class="auth-tab" onclick="switchAuth('signup')">Sign Up</div>
-        </div>
+    <div id="auth-section">
+        <div id="auth-container">
+            <h2 style="text-align: center; color: var(--primary-color);">Daily Earning</h2>
+            <div class="auth-tabs">
+                <div class="auth-tab active" id="tab-login" onclick="switchAuth('login')">Login</div>
+                <div class="auth-tab" id="tab-signup" onclick="switchAuth('signup')">Sign Up</div>
+            </div>
 
-        <div id="login-form" class="auth-form active">
-            <input type="tel" id="login-phone" class="form-control" placeholder="Mobile Number (11 digits)">
-            <input type="password" id="login-pass" class="form-control" placeholder="Password">
-            <button class="btn btn-primary" onclick="handleLogin()">Login</button>
-        </div>
+            <div id="login-form">
+                <input type="tel" id="l-phone" class="form-control" placeholder="Mobile Number">
+                <input type="password" id="l-pass" class="form-control" placeholder="Password">
+                <button class="btn btn-primary" onclick="handleLogin()">Login</button>
+            </div>
 
-        <div id="signup-form" class="auth-form">
-            <input type="text" id="reg-name" class="form-control" placeholder="Full Name">
-            <input type="tel" id="reg-phone" class="form-control" placeholder="Mobile Number">
-            <input type="password" id="reg-pass" class="form-control" placeholder="Set Password">
-            <input type="text" id="reg-ref" class="form-control" placeholder="Refer Code (Optional)">
-            <button class="btn btn-secondary" onclick="handleSignUp()">Create Account</button>
+            <div id="signup-form" class="hidden">
+                <input type="text" id="s-name" class="form-control" placeholder="Full Name">
+                <input type="tel" id="s-phone" class="form-control" placeholder="Mobile Number">
+                <input type="password" id="s-pass" class="form-control" placeholder="Set Password">
+                <input type="text" id="s-ref" class="form-control" placeholder="Refer Code (Optional)">
+                <button class="btn btn-secondary" onclick="handleSignUp()">Create Account</button>
+            </div>
         </div>
     </div>
 
-    <div class="container" id="main-app">
-        <div class="header-container">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <img src="https://i.ibb.co/tZ0d4B4/profile-pic.jpg" class="profile-pic" alt="Profile">
-                <div>
-                    <h3 id="user-display-name" style="margin:0;">User <span style="color:var(--primary-color)">✔</span></h3>
-                    <p style="margin:0; font-size: 0.8rem; color:#888;">ব্যালেন্স: <span id="user-balance">0.00</span> ৳</p>
+    <div id="main-app" class="hidden">
+        <div class="container">
+            <div class="header-container">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <img src="https://i.ibb.co/tZ0d4B4/profile-pic.jpg" class="profile-pic" alt="Profile">
+                    <div>
+                        <h3 id="display-name" style="margin:0;">User <span style="color:var(--primary-color)">✔</span></h3>
+                        <p style="margin:0; font-size: 0.8rem; color:#888;">ব্যালেন্স: <span id="display-balance">0.00</span> ৳</p>
+                    </div>
+                </div>
+                <button onclick="logout()" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:5px;">Logout</button>
+            </div>
+
+            <div id="page-home" class="page-content active">
+                <div class="card" style="text-align: center;">
+                    <h4>Daily Bonus</h4>
+                    <button class="btn btn-primary" onclick="watchAdReward()">Claim Bonus</button>
+                </div>
+                <div class="card">
+                    <h4>Referral System</h4>
+                    <p>আপনার রেফার কোড: <b id="my-ref-code">...</b></p>
+                    <button class="btn btn-secondary" onclick="copyRef()">Copy Referral Code</button>
                 </div>
             </div>
-            <button class="btn btn-primary" style="width: auto; padding: 5px 15px;" id="logout-btn">Logout</button>
-        </div>
 
-        <div id="page-home" class="page-content active">
-            <div class="card">
-                <h4>Daily Reward</h4>
-                <button class="btn btn-primary giga-ad-trigger">Claim Daily Bonus</button>
+            <div id="page-account" class="page-content">
+                <h3>My Dashboard</h3>
+                <div class="dashboard-grid">
+                    <div class="card"><p>Total Clicks</p><h3 id="stat-clicks">0</h3></div>
+                    <div class="card"><p>Balance</p><h3 id="stat-balance">0.00</h3></div>
+                    <div class="card"><p>Referrals</p><h3 id="stat-ref">0</h3></div>
+                </div>
             </div>
-            <div class="card">
-                <h4>Referral Program</h4>
-                <p>Your Ref Code: <b id="my-ref-code">...</b></p>
-                <button class="btn btn-secondary" id="copy-ref">Copy Link</button>
-            </div>
-        </div>
 
-        <div id="page-tasks" class="page-content">
-            <div class="card">
-                <h4>Watch Video Ads</h4>
-                <p>Earn 1.00 TK per ad</p>
-                <button class="btn btn-primary" id="watch-ads-btn">Watch Now</button>
+            <div id="page-withdraw" class="page-content">
+                <h3>Withdraw</h3>
+                <div class="card">
+                    <input type="number" id="w-amount" class="form-control" placeholder="Amount (Min 500)">
+                    <input type="tel" id="w-number" class="form-control" placeholder="Bkash/Nagad Number">
+                    <button class="btn btn-primary" onclick="submitWithdraw()">Submit Request</button>
+                </div>
             </div>
         </div>
 
-        <div id="page-withdraw" class="page-content">
-            <h3>Withdraw Balance</h3>
-            <div class="card">
-                <input type="number" id="w-amount" class="form-control" placeholder="Amount">
-                <input type="tel" id="w-phone" class="form-control" placeholder="Bkash/Nagad Number">
-                <button class="btn btn-primary" onclick="requestWithdraw()">Submit Request</button>
-            </div>
-        </div>
+        <nav class="bottom-nav">
+            <button class="nav-item active" onclick="showPage('home')">Home</button>
+            <button class="nav-item" onclick="showPage('account')">Account</button>
+            <button class="nav-item" onclick="showPage('withdraw')">Withdraw</button>
+        </nav>
     </div>
 
-    <nav class="bottom-nav">
-        <button class="nav-item active" onclick="showPage('home')"><span>Home</span></button>
-        <button class="nav-item" onclick="showPage('tasks')"><span>Tasks</span></button>
-        <button class="nav-item" onclick="showPage('withdraw')"><span>Withdraw</span></button>
-    </nav>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getDatabase, ref, set, get, update, push, child } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
-
+    <script>
+        // আপনার Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyA2HUBFhHEWg4MwkJB4BVdJxUun0Gy07Ts",
             authDomain: "daily-earne-aea89.firebaseapp.com",
@@ -130,96 +134,145 @@
             appId: "1:444567470638:web:0fa323d9f5ef6aba1155bf"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        let currentUser = null;
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        let currentUserData = null;
 
-        // --- Auth Functions ---
-        window.switchAuth = (type) => {
-            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById(`${type}-form`).classList.add('active');
-        };
+        // --- AUTH LOGIC ---
+        function switchAuth(type) {
+            if(type === 'login') {
+                document.getElementById('login-form').classList.remove('hidden');
+                document.getElementById('signup-form').classList.add('hidden');
+                document.getElementById('tab-login').classList.add('active');
+                document.getElementById('tab-signup').classList.remove('active');
+            } else {
+                document.getElementById('login-form').classList.add('hidden');
+                document.getElementById('signup-form').classList.remove('hidden');
+                document.getElementById('tab-signup').classList.add('active');
+                document.getElementById('tab-login').classList.remove('active');
+            }
+        }
 
-        window.handleSignUp = async () => {
-            const name = document.getElementById('reg-name').value;
-            const phone = document.getElementById('reg-phone').value;
-            const pass = document.getElementById('reg-pass').value;
-            const refCode = document.getElementById('reg-ref').value;
+        async function handleSignUp() {
+            const name = document.getElementById('s-name').value;
+            const phone = document.getElementById('s-phone').value;
+            const pass = document.getElementById('s-pass').value;
+            const refCode = document.getElementById('s-ref').value;
 
-            if(phone.length < 11) return alert("Valid number required");
-            
-            const userSnap = await get(child(ref(db), `users/${phone}`));
-            if(userSnap.exists()) return alert("User already exists!");
+            if(!name || phone.length < 11 || pass.length < 4) return alert("সঠিক তথ্য দিন!");
+
+            const userRef = db.ref('users/' + phone);
+            const snapshot = await userRef.once('value');
+
+            if(snapshot.exists()) return alert("এই নম্বর দিয়ে অ্যাকাউন্ট আছে!");
 
             const userData = {
-                name, phone, pass, balance: 0, referrals: 0,
-                joinedAt: new Date().toISOString()
+                name: name,
+                phone: phone,
+                password: pass,
+                balance: 0,
+                referrals: 0,
+                totalClicks: 0,
+                joinedAt: Date.now()
             };
 
-            await set(ref(db, `users/${phone}`), userData);
-            
-            // Referral Logic
+            await userRef.set(userData);
+
+            // রেফারেল বোনাস লজিক
             if(refCode) {
-                const refSnap = await get(child(ref(db), `users/${refCode}`));
-                if(refSnap.exists()){
-                    await update(ref(db, `users/${refCode}`), {
-                        balance: refSnap.val().balance + 5,
-                        referrals: (refSnap.val().referrals || 0) + 1
+                const rRef = db.ref('users/' + refCode);
+                const rSnap = await rRef.once('value');
+                if(rSnap.exists()) {
+                    rRef.update({
+                        balance: rSnap.val().balance + 5,
+                        referrals: (rSnap.val().referrals || 0) + 1
                     });
                 }
             }
-            
-            alert("Registration Successful! Please Login.");
+
+            alert("রেজিস্ট্রেশন সফল! লগইন করুন।");
             switchAuth('login');
-        };
-
-        window.handleLogin = async () => {
-            const phone = document.getElementById('login-phone').value;
-            const pass = document.getElementById('login-pass').value;
-
-            const userSnap = await get(child(ref(db), `users/${phone}`));
-            if(userSnap.exists() && userSnap.val().pass === pass) {
-                localStorage.setItem('userPhone', phone);
-                loadApp(userSnap.val());
-            } else {
-                alert("Wrong credentials!");
-            }
-        };
-
-        // --- App Logic ---
-        function loadApp(data) {
-            currentUser = data;
-            document.getElementById('auth-container').style.display = 'none';
-            document.getElementById('main-app').style.display = 'block';
-            document.querySelector('.bottom-nav').style.display = 'flex';
-            
-            document.getElementById('user-display-name').innerText = data.name;
-            document.getElementById('user-balance').innerText = data.balance.toFixed(2);
-            document.getElementById('my-ref-code').innerText = data.phone;
         }
 
-        window.showPage = (pageId) => {
-            document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
-            document.getElementById(`page-${pageId}`).classList.add('active');
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-        };
+        async function handleLogin() {
+            const phone = document.getElementById('l-phone').value;
+            const pass = document.getElementById('l-pass').value;
 
-        // Logout
-        document.getElementById('logout-btn').onclick = () => {
-            localStorage.removeItem('userPhone');
-            location.reload();
-        };
+            const snapshot = await db.ref('users/' + phone).once('value');
+            if(snapshot.exists() && snapshot.val().password === pass) {
+                localStorage.setItem('userPhone', phone);
+                loadApp(snapshot.val());
+            } else {
+                alert("ভুল নম্বর বা পাসওয়ার্ড!");
+            }
+        }
 
-        // Check Session
-        const savedPhone = localStorage.getItem('userPhone');
-        if(savedPhone) {
-            get(child(ref(db), `users/${savedPhone}`)).then(s => {
-                if(s.exists()) loadApp(s.val());
+        // --- APP LOGIC ---
+        function loadApp(data) {
+            currentUserData = data;
+            document.getElementById('auth-section').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            
+            // UI আপডেট
+            document.getElementById('display-name').innerText = data.name;
+            document.getElementById('display-balance').innerText = data.balance.toFixed(2);
+            document.getElementById('my-ref-code').innerText = data.phone;
+            document.getElementById('stat-clicks').innerText = data.totalClicks || 0;
+            document.getElementById('stat-balance').innerText = data.balance.toFixed(2);
+            document.getElementById('stat-ref').innerText = data.referrals || 0;
+
+            // রিয়েল টাইম ব্যালেন্স আপডেট লিসেনার
+            db.ref('users/' + data.phone).on('value', (snap) => {
+                if(snap.exists()) {
+                    const d = snap.val();
+                    document.getElementById('display-balance').innerText = d.balance.toFixed(2);
+                    document.getElementById('stat-balance').innerText = d.balance.toFixed(2);
+                }
             });
         }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + pageId).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function watchAdReward() {
+            if(typeof show_8954258 === 'function') {
+                show_8954258(); // Monetag
+                const phone = localStorage.getItem('userPhone');
+                const uRef = db.ref('users/' + phone);
+                uRef.update({
+                    balance: firebase.database.ServerValue.increment(1),
+                    totalClicks: firebase.database.ServerValue.increment(1)
+                });
+                alert("১ টাকা যোগ হয়েছে!");
+            } else {
+                alert("বিজ্ঞাপন লোড হচ্ছে না, একটু পর চেষ্টা করুন।");
+            }
+        }
+
+        function logout() {
+            localStorage.clear();
+            location.reload();
+        }
+
+        function copyRef() {
+            const code = document.getElementById('my-ref-code').innerText;
+            navigator.clipboard.writeText(code);
+            alert("রেফার কোড কপি হয়েছে!");
+        }
+
+        // --- সেশন চেক ---
+        window.onload = function() {
+            const savedPhone = localStorage.getItem('userPhone');
+            if(savedPhone) {
+                db.ref('users/' + savedPhone).once('value').then(s => {
+                    if(s.exists()) loadApp(s.val());
+                });
+            }
+        };
     </script>
 </body>
 </html>
